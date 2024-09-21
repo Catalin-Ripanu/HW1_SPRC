@@ -1,4 +1,4 @@
-# HW1 SPRC Report
+# HW1 SPRC
 
 ## Project Overview
 
