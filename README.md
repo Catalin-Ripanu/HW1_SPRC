@@ -1,20 +1,36 @@
-# HW1_SPRC
+# HW1 SPRC Report
 
-This Project refers to the implementation of client and server components that adhere to the authentication model/paradigm described in the project documentation, namely **OAuth**, using the **RPC** protocol. The entire logic written in the sources started from visualizing the diagrams provided in the resource directory and in the project file, which illustrate, with great ease, the entire design of the architecture to be implemented.
+## Project Overview
 
-Well, considering that the project was done in C and that a database was desired within the server, I chose to define, for simplicity, a linked list containing nodes with information extracted from the input files. Moreover, there are some global variables in the _auth.h_ file so that these references to the lists of interest can be seen in the context of functions from the _rpc_server.c_ file (I spent some time here to find a way to avoid global variables, but from what I found out, the **RPC** protocol doesn't expose any technique in this regard). The entire defined interface is in the _auth.h_ file, and in _auth.x_ are the structures and functions that serve the conceived server.
+This project involves implementing client and server components that adhere to the **OAuth** authentication model using the **RPC** protocol. The implementation is based on diagrams provided in the resource directory and project file.
 
-I also added newlines in the test files to validate the correctness of the programs.
+## Implementation Details
 
-Implementation details:
+### General Approach
 
-First of all, it should be mentioned that I only changed the server stub, namely the _auth_svc.c_ file, because it had to parse the lines from the input files in order to put them in the corresponding linked lists. Of course, no changes were necessary in the client stub, I made sure that all references/dependencies were resolved so that there would be no problems during compilation/link-editing.
+- Implemented in C
+- Server uses a linked list as a simple database
+- Global variables defined in `auth.h` for access in `rpc_server.c`
+- Interface defined in `auth.h`
+- Structures and functions for the server defined in `auth.x`
 
-An important aspect of the implementation is that I chose to define in the _rpc_client.c_ source a vector of clients that deals with each user separately, based on their IDs obtained from the _client.in_ input file. There is a list that retains the IDs in a unique way (in other words, this list is very similar, from this point of view, to a *set* of IDs). What I wanted from this approach was the _logical ordering_ of the execution flow in the case of operations/requests, in other words I found that those input IDs _are not sorted_ (this affected me on day 2 of implementation due to _REQUEST_ operations interspersed with other operations), and I decided to do a traversal, in that _for_ loop in the client, in an "ordered" style (a client will execute the operation from its structure _only_ when its turn comes, that's why there is that _list traversal_ at each iteration).
+### Server Implementation
 
-Consider this _scenario_ example:
+- Only modified the server stub (`auth_svc.c`)
+- Parses input files to populate linked lists
+- Uses global variables for list references (due to RPC protocol limitations)
 
-*client.in*:
+### Client Implementation
+
+- Defined a vector of clients in `rpc_client.c`
+- Each client handles a user based on IDs from `client.in`
+- Maintains a unique list of IDs (similar to a set)
+- Implements logical ordering of execution flow for operations/requests
+
+#### Execution Scenario Example
+
+```
+client.in:
 1. oD0prOgBqAsXBW8, REQUEST, 0
 2. oD0prOgBqAsXBW8, MODIFY, Files
 3. OVotQBYz418Ozkz, REQUEST, 1
@@ -22,17 +38,41 @@ Consider this _scenario_ example:
 5. OVotQBYz418Ozkz, DELETE, Files
 6. oD0prOgBqAsXBW8, INSERT, UserData
 7. OVotQBYz418Ozkz, READ, System Settings
+```
 
-There are 2 clients: `client[0].user_id = "oD0prOgBqAsXBW8"` and `client[1].user_id = "OVotQBYz418Ozkz"`.
-The pointer that refers to the head of the _names_ list will refer to the string "oD0prOgBqAsXBW8".
-This indicates that the first client will execute the first operation from its field. When it reaches number 3, the second client will execute the first operation from its own field. When the pointer reaches 6, client[1] will execute the operation with index 2 (the first operation is at index 0).
+- Two clients: `client[0].user_id = "oD0prOgBqAsXBW8"` and `client[1].user_id = "OVotQBYz418Ozkz"`
+- Operations executed in order based on client ID
 
-Another problem was that the server couldn't modify the fields of the structure sent by _reference_, I chose to return a dynamically allocated string that contained certain helper information for the client so that it could update the respective fields (that's why there are many uses of the _strtok_ function). To mark the client's initiation regarding the remaking of the access token, I decided to "sign" with the number 2 the refresh token so as to transmit to the server the fact that the generation of the new _access_ token is desired using a _refresh_ one.
+### Server-Client Communication
 
-Regarding the server, the exposed functions are those described in the statement, with a small exception, namely the _valid_permission_ function (which helps to verify if the respective action has the necessary permission on the resource of interest). There are comments meant to clarify any aspect related to the writing logic in the _rpc_server.c_ source.
+- Server returns dynamically allocated strings with helper information
+- Uses `strtok` function extensively
+- Refresh token "signed" with number 2 to indicate access token regeneration
 
-In the _Makefile_ file there are 2 rules: _run_client_ and _run_server_. In these rules, the index of the test to be executed can be modified.
+### Server Functions
 
-Used resources:
+- Implements functions as described in the project statement
+- Additional `valid_permission` function for action verification
 
-https://docs-archive.freebsd.org/44doc/psd/22.rpcgen/paper.pdf -> rpcgen manual
+## File Structure
+
+- `auth.h`: Interface definition and global variables
+- `auth.x`: Structures and functions for the server
+- `rpc_server.c`: Server implementation
+- `rpc_client.c`: Client implementation
+- `auth_svc.c`: Modified server stub
+
+## Makefile
+
+- Contains two rules: `run_client` and `run_server`
+- Test index can be modified in these rules
+
+## Resources Used
+
+- [rpcgen manual](https://docs-archive.freebsd.org/44doc/psd/22.rpcgen/paper.pdf)
+
+## Notes
+
+- Newlines added to test files for validation
+- Implementation focused on logical ordering of execution flow
+- Server unable to modify structure fields sent by reference; workaround implemented
